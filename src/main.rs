@@ -1,10 +1,13 @@
 extern crate rand;
+use std::fs::File;
+use std::io::Write;
+
 use rand::Rng;
 
-const DATASET_LENGHT:usize = 3_250_000;
+const DATASET_LENGHT:usize = 3_248_700;
 const DECK_SIZE:usize = 52;
 
-type Card = i8;
+type Card = u8;
 type Deck = [Card; DECK_SIZE];
 type Dataset = Vec<Deck>;
 
@@ -34,7 +37,7 @@ fn generate_dataset(shuffle_algo: fn(&mut Deck)) -> Dataset{
     for deck in dataset.iter_mut() { 
         // build out deck
         for i in 0..DECK_SIZE{
-            deck[i] = i as i8;
+            deck[i] = i as Card;
         }
     }
 
@@ -45,20 +48,25 @@ fn generate_dataset(shuffle_algo: fn(&mut Deck)) -> Dataset{
     dataset
 }
 
-// fn write_to_file(dataset:Dataset, file_name: String){
-//     unimplemented!();
-// }
+fn write_to_file(dataset: Dataset, file_name: &String) -> std::io::Result<()>{
+    let flatten_dataset: Vec<Card> = dataset.into_iter().flatten().collect();
+
+    let mut file = File::create(&file_name)?;
+
+    file.write_all(&flatten_dataset)?;
+    
+    Ok(())
+}
 
 fn main() {
 
-    let decks = generate_dataset(bin_shuffle);
-    
-    println!("first deck");
-    for card in decks[0].iter() {
-        print!("{}, ", card);
-    }
-    println!("deck num {}", DATASET_LENGHT);
-    for card in decks[DATASET_LENGHT-1].iter() {
-        print!("{}, ", card);
-    }
+    for i in 0..3 {
+        let dataset = generate_dataset(bin_shuffle);
+        let file_name = format!("test_bin_shuffle-{}.bin", i);
+        match write_to_file(dataset, &file_name) {
+            Ok(_) => println!("File {} written succesfully", file_name),
+            Err(e) => eprintln!("Error writing to file {}: {}", file_name, e),
+            
+        }
+     }
 }
